@@ -1,0 +1,57 @@
+#!/bin/sh
+
+#
+# Created by Liam Powell (gfelipe099)
+# chkdsk file
+#
+
+help() {
+    cat << EOF
+
+Usage: ${0} [OPTIONS]
+
+--list-disks, -l        Shows available devices on the system
+--repair, -r            Repairs the device selected
+--help, -h              Shows this message
+
+EOF
+}
+
+if [ -z "${1}" ]; then
+    help
+fi
+
+if [ "${*}" = "--help" ] || [ "${*}" = "-h" ]; then
+    help
+fi
+
+while [ $# -gt 0 ]; do
+    case "${1}" in
+        --list-disks|-l)
+            echo "" && echo "--> These devices were found on your system:"
+            for devices in $(lsblk -l -n -o name); do
+                echo "/dev/${devices}"
+            done && echo ""
+            read -p "Which device do you want to select for repairing?: /dev/" diskToRepair
+            if [ ! -z ${diskToRepair} ]; then
+                diskToRepair="${diskToRepair}"
+                echo "Device /dev/${diskToRepair} selected for reparing."
+            fi
+        ;;
+        --repair|-r)
+            if [ -z "${diskToRepair}" ]; then
+                echo "Run --list-disks or -l to select a device to repair, then execute this command again"
+                else
+                    if [ "$(whoami)" != "root" ]; then
+                        echo "You need root privileges to continue."
+                        else
+                            fsck -f -v -y /dev/${diskToRepair}
+                    fi
+            fi
+        ;;
+        *)
+            shift
+        ;;
+    esac
+    shift
+done
